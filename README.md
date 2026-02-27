@@ -20,10 +20,10 @@ L'unité de base de stockage. C'est un objet JSON (stocké en BSON) qui peut con
 ```
 
 ### Collection
-Regroupement de documents, analogue à une *table* SQL. Dans ce projet : collection **`patients`**.
+Regroupement de documents, analogue à une *table* SQL. Dans ce projet : collection **patients**.
 
 ### Base de données
-Regroupe un ensemble de collections. Dans ce projet : base **`medical_db`**.
+Regroupe un ensemble de collections. Dans ce projet : base **medical_db**.
 
 ---
 
@@ -104,54 +104,54 @@ python migrate.py
 
 ## Ce que fait le script
 
-Le script `migrate.py` enchaîne les étapes suivantes à chaque exécution :
+Le script migrate.py enchaîne les étapes suivantes à chaque exécution :
 
 ### 1 — Connexion MongoDB
-Connexion à `mongodb://localhost:27017/` et accès à la base `medical_db`, collection `patients`.
+Connexion à mongodb://localhost:27017/ et accès à la base medical_db, collection patients.
 
 ### 2 — Lecture du CSV
-Lecture du fichier `data/medical_data.csv` avec pandas.
+Lecture du fichier data/medical_data.csv avec pandas.
 
 ### 3 — Tests d'intégrité sur le CSV
 
 | Contrôle | Détail |
 |---|---|
 | Colonnes présentes | Les 15 colonnes requises doivent exister |
-| Doublons | Sur la clé `Name + Date of Admission` |
+| Doublons | Sur la clé Name + Date of Admission |
 | Valeurs manquantes | Signalement colonne par colonne |
-| Domaine `Gender` | Male / Female / Other |
-| Domaine `Blood Type` | A+, A-, B+, B-, AB+, AB-, O+, O- |
-| Domaine `Admission Type` | Elective / Emergency / Urgent |
-| Domaine `Test Results` | Normal / Abnormal / Inconclusive |
-| Plage `Age` | Entre 0 et 130 |
-| `Billing Amount` | Doit être positif |
-| Cohérence des dates | `Discharge Date` >= `Date of Admission` |
+| Domaine Gender | Male / Female / Other |
+| Domaine Blood Type | A+, A-, B+, B-, AB+, AB-, O+, O- |
+| Domaine Admission Type | Elective / Emergency / Urgent |
+| Domaine Test Results | Normal / Abnormal / Inconclusive |
+| Plage Age | Entre 0 et 130 |
+| Billing Amount | Doit être positif |
+| Cohérence des dates | Discharge Date >= Date of Admission |
 
 ### 4 — Nettoyage et typage
 
 | Colonne | Type MongoDB |
 |---|---|
-| `Age`, `Room Number` | Int32 (entier) |
-| `Billing Amount` | Double (flottant) |
-| `Date of Admission`, `Discharge Date` | Date (datetime) |
+| Age, Room Number | Int32 (entier) |
+| Billing Amount | Double (flottant) |
+| Date of Admission, Discharge Date | Date (datetime) |
 | Toutes les autres | String |
 
-Les doublons sur `Name + Date of Admission` sont supprimés avant insertion.
+Les doublons sur Name + Date of Admission sont supprimés avant insertion.
 
 ### 5 — Insertion dans MongoDB
-Insertion en masse avec `insert_many`. **Idempotente** : la collection est vidée avant chaque exécution pour éviter les doublons.
+Insertion en masse avec insert_many. **Idempotente** : la collection est vidée avant chaque exécution pour éviter les doublons.
 
 ### 6 — Création des index
 
 | Index | Champ indexé |
 |---|---|
-| `idx_name` | `personal_info.name` |
-| `idx_condition` | `medical_info.condition` |
-| `idx_test_results` | `medical_info.test_results` |
-| `idx_admission_date` | `hospitalization.date_of_admission` |
-| `idx_hospital` | `hospitalization.hospital` |
-| `idx_admission_type` | `hospitalization.admission_type` |
-| `idx_insurance` | `billing.insurance_provider` |
+| idx_name | personal_info.name |
+| idx_condition | medical_info.condition |
+| idx_test_results | medical_info.test_results |
+| idx_admission_date | hospitalization.date_of_admission |
+| idx_hospital | hospitalization.hospital |
+| idx_admission_type | hospitalization.admission_type |
+| idx_insurance | billing.insurance_provider |
 
 ### 7 — Démonstration CRUD
 
@@ -174,13 +174,13 @@ collection.delete_one({ "_id": oid })
 
 Vérifications après migration :
 - Nombre de documents en base = nombre de lignes CSV
-- Aucun doublon sur `name + date_of_admission`
-- Typage correct : `age` (int), `amount` (float), `date_of_admission` (datetime)
+- Aucun doublon sur name + date_of_admission
+- Typage correct : age (int), amount (float), date_of_admission (datetime)
 - Les 7 index sont présents
 - Tous les patients du CSV sont bien en base
 
 ### 9 — Export JSON
-La collection est exportée dans `data/export_patients.json` (sans `_id`, dates en ISO 8601).
+La collection est exportée dans data/export_patients.json (sans _id, dates en ISO 8601).
 
 Pour ré-importer :
 ```powershell
@@ -192,8 +192,8 @@ mongoimport --uri "mongodb://localhost:27017/medical_db" --collection patients -
 ## Visualiser les données avec MongoDB Compass
 
 1. Ouvre **MongoDB Compass**
-2. Connecte-toi sur `mongodb://localhost:27017`
-3. Navigue vers `medical_db` → `patients`
+2. Connecte-toi sur mongodb://localhost:27017
+3. Navigue vers medical_db → patients
 4. Clique sur **Refresh** si la base n'apparaît pas
 
 ---
@@ -202,5 +202,5 @@ mongoimport --uri "mongodb://localhost:27017/medical_db" --collection patients -
 
 | Package | Rôle |
 |---|---|
-| `pymongo` | Driver officiel MongoDB pour Python |
-| `pandas` | Lecture et nettoyage du CSV |
+| pymongo | Driver officiel MongoDB pour Python |
+| pandas | Lecture et nettoyage du CSV |
