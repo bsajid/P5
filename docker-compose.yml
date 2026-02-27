@@ -1,0 +1,107 @@
+# ==== docker-compose.yml ====
+
+# Ce fichier orchestre plusieurs conteneurs Docker
+# en même temps et les fait communiquer entre eux.
+#
+# Ici on a 2 conteneurs :
+#   1. mongodb   → la base de données
+#   2. migration → le script Python qui lit le CSV
+#                  et insère les données dans MongoDB
+#
+# Et 2 volumes :
+#   - mongo_data → stocke les données MongoDB
+#   - csv_data   → stocke le fichier CSV source
+
+version: "3.9"
+
+services:
+
+  # ---- Conteneur 1 : MongoDB ----
+
+  mongodb:
+
+    image: mongo:7.0
+
+    container_name: medical_mongodb
+
+    # Le conteneur redémarre automatiquement s'il plante
+    restart: unless-stopped
+
+    ports:
+
+      # On expose le port 27017 du conteneur sur le port 27017 de l'hôte.
+      - "27017:27017"
+
+    volumes:
+      # On monte le volume "mongo_data" sur /data/db dans le conteneur.
+      # Grâce au volume, les données sont conservées même si on supprime et recrée le conteneur.
+      - mongo_data:/data/db
+
+    networks:
+      - medical_network
+
+    # Vérification que MongoDB est bien prêt à recevoir des connexions avant de démarrer le conteneur de migration.
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s      # vérifie toutes les 10 secondes
+      timeout: 5s        # abandonne si pas de réponse en 5s
+      retries: 5         # essaie 5 fois avant de déclarer le service en échec
+      start_period: 20s  # attend 20s avant le premier contrôle (MongoDB est lent à démarrer)
+
+
+  # ---- Conteneur 2 : Script de migration Python ----
+
+  migration:
+
+    # On ne part pas d'une image toute faite : on construit notre propre image à partir du Dockerfile.
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: medical_migration
+
+    # Ce conteneur attend que MongoDB soit "healthy" avant de démarrer le script de migration pour éviter les erreurs de connexion.
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+    environment:
+      # Variables d'environnement transmises au script Python.
+      MONGO_URI: mongodb://mongodb:27017/
+      MONGO_DB: medical_db
+      MONGO_COLLECTION: patients
+      # Le CSV est lu depuis le volume csv_data, monté sur /data
+      CSV_PATH: /data/medical_data.csv
+
+    volumes:
+      # On monte le volume "csv_data" sur /data dans le conteneur pour que le script puisse lire le fichier CSV source medical_data.csv.
+      - csv_data:/data
+
+    networks:
+      - medical_network
+
+    # "no" = le conteneur ne redémarre pas après avoir fini d'exécuter le script de migration. C'est normal : une fois les données insérées, il n'a plus rien à faire.
+    restart: "no"
+
+
+
+# ==== VOLUMES ====
+
+volumes:
+
+  mongo_data:
+    # Volume géré par Docker pour les données MongoDB (la base de données est stockée dans ce volume).
+    driver: local
+
+  csv_data:
+    # Volume géré par Docker pour le fichier CSV source (le fichier medical_data.csv doit être placé dans ce volume pour que le script de migration puisse le lire).
+    driver: local
+
+
+
+# ==== RÉSEAU ====
+
+networks:
+  medical_network:
+    # Réseau privé entre les deux conteneurs pour qu'ils puissent communiquer entre eux (le conteneur de migration peut accéder à MongoDB via son nom de service "mongodb").
+    driver: bridge
