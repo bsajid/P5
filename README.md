@@ -70,7 +70,6 @@ Document "patient"
 P5/
 ├── data/
 │   ├── medical_data.csv          # Dataset source
-│   └── export_patients.json      # Export généré après migration
 ├── migrate.py                    # Script de migration
 ├── requirements.txt              # Dépendances Python
 └── README.md                     # Ce fichier
@@ -179,15 +178,6 @@ Vérifications après migration :
 - Les 7 index sont présents
 - Tous les patients du CSV sont bien en base
 
-### 9 — Export JSON
-La collection est exportée dans data/export_patients.json (sans _id, dates en ISO 8601).
-
-Pour ré-importer :
-```powershell
-mongoimport --uri "mongodb://localhost:27017/medical_db" --collection patients --file data/export_patients.json --jsonArray
-```
-
----
 
 ## Visualiser les données avec MongoDB Compass
 
