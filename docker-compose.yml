@@ -75,7 +75,7 @@ services:
 
     volumes:
       # On monte le volume "csv_data" sur /data dans le conteneur pour que le script puisse lire le fichier CSV source medical_data.csv.
-      - csv_data:/data
+      - ./data:/data
 
     networks:
       - medical_network
