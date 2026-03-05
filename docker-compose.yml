@@ -10,7 +10,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db  # Les données sont conservées même si le conteneur est supprimé
+      - mongo_data:/data/db  # Les données sont conservées même si le conteneur est supprimé.
     networks:
       - medical_network
     healthcheck:
@@ -20,27 +20,27 @@ services:
       retries: 5
       start_period: 20s
 
-  # Conteneur 2 : Script de migration Python
+  # Conteneur 2 : Script de migration Python.
   migration:
     build: .
     container_name: medical_migration
     depends_on:
       mongodb:
-        condition: service_healthy  # Attend que MongoDB soit prêt
+        condition: service_healthy  # Attend que MongoDB soit prêt.
     environment:
       MONGO_URI: mongodb://mongodb:27017/
       MONGO_DB: medical_db
       MONGO_COLLECTION: patients
       CSV_PATH: /data/medical_data.csv
     volumes:
-      - ./data:/data  # Le dossier local data/ est monté dans le conteneur
+      - ./data:/data  # Le dossier local data/ est monté dans le conteneur.
     networks:
       - medical_network
-    restart: "no"  # Le conteneur s'arrête une fois la migration terminée
+    restart: "no"  # Le conteneur s'arrête une fois la migration terminée.
 
 volumes:
-  mongo_data:  # Stockage persistant des données MongoDB
+  mongo_data:  # Stockage persistant des données MongoDB.
 
 networks:
-  medical_network:  # Réseau privé entre les deux conteneurs
+  medical_network:  # Réseau privé entre les deux conteneurs.
     driver: bridge
