@@ -19,7 +19,7 @@ COL_NAME    = os.getenv("MONGO_COLLECTION", "patients")
 CSV_PATH    = os.getenv("CSV_PATH",         "data/medical_data.csv")
 
 
-# ==== FONCTION 1 : Lecture, validation et nettoyage du CSV ====
+# ===== FONCTION 1 : Lecture, validation et nettoyage du CSV =====
 
 def lire_csv(chemin_csv):
     """
@@ -123,7 +123,7 @@ def lire_csv(chemin_csv):
     return df
 
 
-# ==== FONCTION 2 : Insertion dans MongoDB + index + CRUD + contrôles ====
+# ===== FONCTION 2 : Insertion dans MongoDB + index + CRUD + contrôles =====
 
 def migrer_mongodb(df, uri, user, password, db_name, col_name):
     """
@@ -137,7 +137,7 @@ def migrer_mongodb(df, uri, user, password, db_name, col_name):
         uri,
         username=user,
         password=password,
-        authSource="admin",          # La base où le compte est créé
+        authSource="medical_db",      # La base où le compte est créé
         authMechanism="SCRAM-SHA-256" # Mécanisme d'authentification sécurisé
     )
     db         = client[db_name]
