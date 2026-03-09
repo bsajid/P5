@@ -131,6 +131,23 @@ Docker va créer deux "boîtes" isolées (conteneurs) qui communiquent entre ell
 - une boîte pour **MongoDB**
 - une boîte pour **le script Python**
 
+### Architecture Docker
+
+```
+┌─────────────────────────────────────────┐
+│           medical_network (bridge)       │
+│                                         │
+│  ┌─────────────────┐  ┌──────────────┐  │
+│  │ medical_mongodb │  │medical_migra-│  │
+│  │  (mongo:7.0)    │◄─│    tion      │  │
+│  │  port 27017     │  │  (Python)    │  │
+│  └─────────────────┘  └──────────────┘  │
+│                                         │
+└─────────────────────────────────────────┘
+         │
+    mongo_data (volume persistant)
+```
+
 ### Prérequis
 
 - Docker installé
@@ -143,9 +160,10 @@ docker-compose up --build
 ```
 
 C'est tout ! Docker va automatiquement :
-1. Démarrer MongoDB
-2. Attendre que MongoDB soit prêt
-3. Lancer le script de migration
+1. Créer le réseau privé `medical_network`
+2. Démarrer MongoDB
+3. Attendre que MongoDB soit prêt (healthcheck)
+4. Lancer le script de migration
 
 ### Voir les logs de la migration
 
