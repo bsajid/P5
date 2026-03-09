@@ -11,6 +11,8 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db  # Les données sont conservées même si le conteneur est supprimé
+    networks:
+      - medical_network
 
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
@@ -33,7 +35,13 @@ services:
       CSV_PATH: /data/medical_data.csv 
     volumes:
       - ./data:/data  # Le dossier local ./data est monté directement dans le conteneur
+    networks:
+      - medical_network
     restart: "no"  # Le conteneur s'arrête une fois la migration terminée
 
 volumes:
   mongo_data:  # Stockage persistant des données MongoDB
+
+networks:
+  medical_network:  # Réseau privé entre les deux conteneurs
+    driver: bridge
