@@ -1,8 +1,6 @@
 version: "3.9"
-
 services:
-
-  # Conteneur 1 : MongoDB
+  # Conteneur 1 : MongoDB avec authentification
   mongodb:
     image: mongo:7.0
     container_name: medical_mongodb
@@ -10,38 +8,49 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db  # Les données sont conservées même si le conteneur est supprimé
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - medical_network
-
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}   # Utilisateur 1 : root_admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS}
+      MONGO_INITDB_DATABASE: admin
+      MONGO_RW_USER: ${MONGO_RW_USER}                  # Utilisateur 2 : read_write_user
+      MONGO_RW_PASS: ${MONGO_RW_PASS}
+      MONGO_RO_USER: ${MONGO_RO_USER}                  # Utilisateur 3 : read_only_user
+      MONGO_RO_PASS: ${MONGO_RO_PASS}
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--username", "${MONGO_ROOT_USER}", "--password", "${MONGO_ROOT_PASS}", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
 
   # Conteneur 2 : Script de migration Python
+  # Utilise read_write_user : droits lecture + écriture + index sur medical_db
   migration:
     build: .
     container_name: medical_migration
     depends_on:
       mongodb:
-        condition: service_healthy  # Attend que MongoDB soit prêt
+        condition: service_healthy
     environment:
       MONGO_URI: mongodb://mongodb:27017/
+      MONGO_USER: ${MONGO_RW_USER}
+      MONGO_PASS: ${MONGO_RW_PASS}
       MONGO_DB: medical_db
       MONGO_COLLECTION: patients
-      CSV_PATH: /data/medical_data.csv 
+      CSV_PATH: /data/medical_data.csv
     volumes:
-      - ./data:/data  # Le dossier local ./data est monté directement dans le conteneur
+      - ./data:/data
     networks:
       - medical_network
-    restart: "no"  # Le conteneur s'arrête une fois la migration terminée
+    restart: "no"
 
 volumes:
-  mongo_data:  # Stockage persistant des données MongoDB
+  mongo_data:
 
 networks:
-  medical_network:  # Réseau privé entre les deux conteneurs
+  medical_network:
     driver: bridge
